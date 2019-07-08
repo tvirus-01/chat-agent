@@ -63,7 +63,7 @@ include $path.'header.php';
 		echo '<div class="row mt-3">
 				<div class="col">
 					<h4 class="float-left">Agent Name: '.$user['user_name'].'</h4>
-					<span class="float-right h6">NMSID: '.$user['nmsid'].'</span>
+					<span class="float-right h6">NMS_ID: '.$user['nmsid'].'</span>
 				</div>
 			</div>';	
 

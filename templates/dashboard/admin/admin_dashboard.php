@@ -61,7 +61,7 @@ include $path.'header.php';
 			<table class="table table-bordered">
 				<thead>
 					<tr>
-						<th scope="col" class="text-center">NMSID</th>
+						<th scope="col" class="text-center">NMS_ID</th>
 						<th scope="col" class="text-center">User Name</th>
 						<th scope="col" class="text-center">User Email</th>
 						<th scope="col" class="text-center" colspan="2">
@@ -73,8 +73,13 @@ include $path.'header.php';
 				</thead>
 				<tbody>
 					<?php
+						$tot_mssg = 0;
+						$tot_rate = 0;
 						foreach ($users as $user) {
 							$userid = $user['id'];
+							$username = $user['user_name'];
+							$useremail = $user['user_email'];
+							$nmsid = $user['nmsid'];
 							$totals = $conn->query("SELECT * FROM tbl_daily_production WHERE userid = {$userid}");
 							$total_mssg = 0;
 							$total_rate = 0;
@@ -86,36 +91,82 @@ include $path.'header.php';
 							}
 					?>
 						<tr>
-							<td><a href="daily-production.php?uid=<?php echo $userid; ?>" class="btn btn-link"><?php echo $user['nmsid']; ?></a></td>
-							<td><?php echo $user['user_name']; ?></td>
-							<td><?php echo $user['user_email']; ?></td>
+							<td><a href="daily-production.php?uid=<?php echo $userid; ?>" class="btn btn-link"><?php echo $nmsid; ?></a></td>
+							<td><?php echo $username; ?></td>
+							<td><?php echo $useremail; ?></td>
 							<td><?php echo $total_mssg; ?></td>
 							<td><?php echo '$'.$total_rate; ?></td>
 							<td class="text-center">
 								<button class="btn btn-danger btn-sm mr-3 dlt_btn" meta-data="<?php echo $userid; ?>" data-toggle="modal" data-target="#dlt_modal">X</button>
-								<button class="btn btn-info btn-sm"><img src="<?php echo $path.'assets/img/icon/pencil.png' ?>"></button>
+								<button class="btn btn-info btn-sm edt_btn" meta-uname="<?php echo $username; ?>" meta-email="<?php echo $useremail; ?>" meta-nmsid="<?php echo $nmsid; ?>" data-toggle="modal" meta-data="<?php echo $userid; ?>" data-target="#edt_modal"><img src="<?php echo $path.'assets/img/icon/pencil.png' ?>"></button>
 							</td>
 						</tr>
 					<?php
+						$tot_mssg += $total_mssg;
+						$tot_rate += $total_rate;
 						}
 					?>
+					<tr>
+						<td class="font-weight-bold">Total</td>
+						<td></td>
+						<td></td>
+						<td><?php echo $tot_mssg; ?></td>
+						<td><?php echo $tot_rate; ?></td>
+						<td></td>
+					</tr>
 				</tbody>
 			</table>
 			<div class="modal fade" id="dlt_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
 			  <div class="modal-dialog modal-dialog-centered" role="document">
 			    <div class="modal-content">
-			      <div class="modal-header">
+			      <div class="modal-header bg-danger">
 			        <h5 class="modal-title" id="exampleModalLongTitle">Confirm Delete</h5>
-			        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			        <button type="button" class="close" data-dismiss="modal" onclick="window.location.reload()" aria-label="Close">
 			          <span aria-hidden="true">&times;</span>
 			        </button>
 			      </div>
 			      <div class="modal-body">
 			      	<span>Are you sure you want to delete this user?</span>
+			      	<br>
+			      	<span class="text-warning"></span>
+			      	<input type="hidden" class="meta" value="">
 			      </div>
 			      <div class="modal-footer">
-			        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-			        <button type="button" class="btn btn-primary">Save changes</button>
+			        <button type="button" class="btn btn-secondary" onclick="window.location.reload()" data-dismiss="modal">Cancle</button>
+			        <button type="button" class="btn btn-danger dlt_con">Delete</button>
+			      </div>
+			    </div>
+			  </div>
+			</div>
+			<div class="modal fade" id="edt_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+			  <div class="modal-dialog modal-dialog-centered" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header bg-primary">
+			        <h5 class="modal-title text-light" id="exampleModalLongTitle">Edit User Info</h5>
+			        <button type="button" class="close" data-dismiss="modal" onclick="window.location.reload()" aria-label="Close">
+			          <span aria-hidden="true">&times;</span>
+			        </button>
+			      </div>
+			      <div class="modal-body">
+			      	<div class="form-group">
+			      		<label>User Name</label>
+			      		<input type="text" class="form-control uname">
+			      		<input type="hidden" class="metaid" value="">	
+			      	</div>
+			      	<div class="form-group">
+			      		<label>User Email</label>
+			      		<input type="text" class="form-control umail">	
+			      	</div>
+			      	<div class="form-group">
+			      		<label>NMS ID</label>
+			      		<input type="text" class="form-control nmsid">	
+			      	</div>
+			      	<br>
+			      	<span class="text-success text-edit"></span>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-secondary" onclick="window.location.reload()" data-dismiss="modal">Cancle</button>
+			        <button type="button" class="btn btn-primary edt_con">Save Changes</button>
 			      </div>
 			    </div>
 			  </div>
@@ -137,8 +188,52 @@ include $path.'header.php';
 	<script type="text/javascript">
 		$('.dlt_btn').click(function() {
 			var userid = $(this).attr('meta-data');
-
+			$(".meta").val(userid);
 		});
+		$('.dlt_con').click(function() {
+			var userid = $('.meta').val();
+			$.ajax({
+				url: '../../../modules/delete_user.php',
+				method: 'POST',
+				data: {uid: userid},
+				success: function(mssg) {
+					$('.text-warning').text(mssg);
+					setTimeout(function(){
+						window.location.reload();
+					}, 500);
+				}
+			});
+		});
+
+		$('.edt_btn').click(function(){
+			var username = $(this).attr('meta-uname');
+			var useremail = $(this).attr('meta-email');
+			var nmsid = $(this).attr('meta-nmsid');
+			var userid = $(this).attr('meta-data');
+			$('.uname').val(username);
+			$('.umail').val(useremail);
+			$('.nmsid').val(nmsid);
+			$('.metaid').val(userid);
+		});
+
+		$('.edt_con').click(function() {
+			var uname = $('.uname').val();
+			var umail = $('.umail').val();
+			var nmsid = $('.nmsid').val();
+			var metaid = $('.metaid').val();
+			$.ajax({
+				url: '../../../modules/edit_user.php',
+				method: 'POST',
+				data: {uid: metaid, uname: uname, umail: umail, nmsid: nmsid},
+				success: function(mssg) {
+					$('.text-edit').text(mssg);
+					setTimeout(function(){
+						window.location.reload();
+					}, 500);
+				}
+			})
+		});
+
 	</script>
 <?php
 include $path.'footer.php';
